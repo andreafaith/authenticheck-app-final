@@ -5,10 +5,12 @@ import {
   Text,
   TouchableOpacity,
   Image,
+  PermissionsAndroid,
 } from "react-native";
+import * as FileSystem from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { Picker } from "@react-native-picker/picker";
-import * as DocumentPicker from 'expo-document-picker';
+import * as Permissions from "expo-permissions";
 
 const UploadAudioScreen = () => {
   const [audioFile, setAudioFile] = useState(null);
@@ -29,17 +31,20 @@ const UploadAudioScreen = () => {
 
   const pickFile = async () => {
     try {
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (permission.status === "granted") {
-        const file = await DocumentPicker.getDocumentAsync({
-          type: "audio/*",
-          copyToCacheDirectory: true,
-          multiple: false
+      const granted = await Permissions.askAsync(
+        Permissions.AUDIO_RECORDING,
+        Permissions.MEDIA_LIBRARY
+      );
+
+      if (granted.status === "granted") {
+        const { uri } = await FileSystem.getInfoAsync({
+          type: "library",
+          allowsEditing: false,
+          multiple: false,
+          mimeType: "audio/*",
         });
 
-        if (file.type === 'success') {
-          setAudioFile(file.uri);
-        }
+        setAudioFile(uri);
       } else {
         console.log("Permissions not granted.");
       }
